@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
         databaseConnection = undefined;
         console.error("API startup failed:", error);
         return res.status(500).json({
-            message: "Server configuration or database connection failed",
+            message: error.message || "Server configuration or database connection failed",
         });
     }
 };
