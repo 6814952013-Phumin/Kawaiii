@@ -57,6 +57,11 @@ const formatDate = (date) => new Intl.DateTimeFormat("en-US", {
   weekday: "long", day: "numeric", month: "long"
 }).format(date);
 const apiBase = import.meta.env.VITE_API_URL || "/api";
+const readApiResponse = async (response) => {
+  const text = await response.text();
+  try { return text ? JSON.parse(text) : {}; }
+  catch { throw new Error(text || `Request failed with status ${response.status}`); }
+};
 
 function MusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCreate, onSaveTrack }) {
   const selectedPlaylist = playlists.find((playlist) => playlist.id === selectedPlaylistId) || playlists[0];
@@ -195,7 +200,7 @@ function App() {
     const loadShortcuts = async () => {
       try {
         const response = await fetch(`${apiBase}/shortcuts`);
-        const data = await response.json();
+        const data = await readApiResponse(response);
         if (response.ok && data.length) setShortcuts(data);
       } catch {
         // Keep the local collection available when the API is offline.
@@ -223,7 +228,7 @@ function App() {
       const body = new FormData();
       body.append("file", file);
       const response = await fetch(`${apiBase}/uploads/image`, { method: "POST", body });
-      const data = await response.json();
+      const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.message || "Image upload failed");
       setForm((value) => ({ ...value, imageUrl: data.url }));
     } catch (error) {
@@ -243,7 +248,7 @@ function App() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(authMode === "login" ? { email: authForm.email, password: authForm.password } : authForm),
       });
-      const data = await response.json();
+      const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.message || "Unable to continue");
       localStorage.setItem("kawaiii-token", data.token);
       localStorage.setItem("kawaiii-user", JSON.stringify(data.user));
@@ -263,7 +268,7 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newShortcut),
       });
-      const data = response.status === 204 ? newShortcut : await response.json();
+      const data = response.status === 204 ? newShortcut : await readApiResponse(response);
       if (!response.ok) throw new Error(data.message);
       savedShortcut = data;
     } catch {
