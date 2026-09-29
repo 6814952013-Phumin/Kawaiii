@@ -4,6 +4,7 @@ import {
   House, ListPlus, Menu, Moon, Music2, Pencil, Play, Plus, Search,
   Settings, Sparkles, Sun, UserRound, X, Zap
 } from "lucide-react";
+import vinylRecordImage from "../image/vinyl-record.avif";
 
 const starterShortcuts = [
   { name: "Workspace", url: "https://workspace.google.com", color: "#00c6e6", icon: "W" },
@@ -76,7 +77,7 @@ function MusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCrea
         <button className="music-play-button" type="button"><Play size={17} fill="currentColor"/> Resume listening</button>
       </div>
       <div className="now-playing-card">
-        <div className="album-disc"><span className="album-cover album-cover-current"><Music2 size={29}/></span></div>
+        <div className="album-disc"><img src={vinylRecordImage} alt="Vinyl record" className="vinyl-record-image album-record" /></div>
         <div><span className="playing-label">NOW PLAYING</span><strong>Paper Rings</strong><small>Luna Hart</small></div>
         <span className="sound-waves" aria-hidden="true"><i/><i/><i/><i/></span>
       </div>
@@ -312,6 +313,9 @@ function App() {
     settings: ["YOUR PREFERENCES", "Fine-tune your space."],
   };
   const [headingLabel, headingTitle] = pageHeadings[activePage];
+  const latestTrack = frequentTracks[0];
+
+  const openMusicPage = () => setActivePage("music");
 
   return (
     <div className={dark ? "app dark" : "app"}>
@@ -345,10 +349,16 @@ function App() {
 
         <section className="dashboard-grid">
           <article className="panel focus-panel">
-            <div className="panel-heading"><div><p className="eyebrow">TODAY'S FOCUS</p><h2>Keep it simple.</h2></div><button className="icon-control" title="Focus settings"><Settings size={17}/></button></div>
-            <div className="focus-orbit"><span className="orbit-core"><Zap size={22} fill="currentColor" /></span></div>
-            <p className="focus-copy">Pick one meaningful thing and give it your full attention.</p>
-            <button className="outline-button"><Clock3 size={16}/> Start focus</button>
+            <div className="panel-heading"><div><p className="eyebrow">TODAY'S FOCUS</p><h2>Latest listen</h2></div><button className="icon-control" title="Focus settings"><Settings size={17}/></button></div>
+            <button type="button" className="focus-track-button" onClick={openMusicPage} aria-label="Open music page">
+              <div className="focus-track-art" style={{ "--track-cover": latestTrack.cover }}><img src={vinylRecordImage} alt="Vinyl record" className="vinyl-record-image focus-record" /></div>
+            </button>
+            <div className="focus-track-meta">
+              <span className="focus-track-label">NOW PLAYING</span>
+              <strong>{latestTrack.title}</strong>
+              <small>{latestTrack.artist}</small>
+            </div>
+            <button className="outline-button" type="button" onClick={openMusicPage}><Play size={16} fill="currentColor"/> Resume listening</button>
           </article>
 
           <article className="panel quick-panel">
