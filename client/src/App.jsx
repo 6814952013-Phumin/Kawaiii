@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import {
   BarChart3, Bell, CalendarDays, ChevronRight, Clock3, Disc3, Heart,
   House, ListPlus, Menu, Moon, Music2, Pencil, Play, Plus, Search,
-  Settings, Sparkles, Sun, UserRound, X, Zap
+  Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2
 } from "lucide-react";
 import vinylRecordImage from "../image/vinyl-record.avif";
+import backgroundLayer from "../image/Backgraoud1.png?inline";
+import kawaiiBackLayer from "../image/kawaii1.png?inline";
+import animeShadowLayer from "../image/animeBlue.png?inline";
+import animeLayer from "../image/anime.png?inline";
+import CursorGrid from "./CursorGrid";
+import ClickSpark from "./ClickSpark";
 
 const starterShortcuts = [
   { name: "Workspace", url: "https://workspace.google.com", color: "#00c6e6", icon: "W" },
@@ -18,9 +24,9 @@ const starterShortcuts = [
 ];
 
 const navItems = [
-  { label: "Home", Icon: House, page: "dashboard" }, { label: "Music", Icon: Music2, page: "music" },
-  { label: "Profile", Icon: UserRound, page: "profile" },
-  { label: "Calendar", Icon: CalendarDays, page: "calendar" }, { label: "Settings", Icon: Settings, page: "settings" },
+  { label: "Home", Icon: UserRound, page: "dashboard" }, { label: "Profile", Icon: House, page: "profile" },
+  { label: "Music", Icon: Music2, page: "music" }, { label: "Calendar", Icon: CalendarDays, page: "calendar" },
+  { label: "Setting", Icon: Settings, page: "settings" },
 ];
 
 const frequentTracks = [
@@ -140,13 +146,55 @@ function CalendarPage() {
   </section>;
 }
 
-function ProfilePage({ user, onSignIn }) {
+function QuickAccess({ shortcuts, editing, onToggleEditing, onEdit, onRemove, onAdd }) {
+  return <article className="utility-panel quick-panel profile-quick-access">
+    <div className="panel-heading"><div><p className="eyebrow">YOUR FAVOURITES</p><h2>Quick Access</h2></div><button className={`edit-button ${editing ? "selected" : ""}`} onClick={onToggleEditing}>{editing ? "Done" : "Edit"}</button></div>
+    <div className="shortcut-grid">
+      {shortcuts.map((shortcut, index) => <a className={`shortcut ${editing ? "shortcut-editing" : ""}`} href={shortcut.url || "#"} target="_blank" rel="noreferrer" key={shortcut._id || `${shortcut.name}-${index}`} onClick={(event) => editing && onEdit(event, shortcut, index)}>
+        <span className="shortcut-icon" style={{ "--shortcut-color": shortcut.color }}>{shortcut.imageUrl ? <img src={shortcut.imageUrl} alt="" /> : shortcut.icon}</span><span>{shortcut.name}</span>{editing && <><span className="edit-shortcut" aria-hidden="true"><Pencil size={12}/></span><button className="remove-shortcut" onClick={(event) => onRemove(event, shortcut, index)} aria-label={`Remove ${shortcut.name}`}><X size={12}/></button></>}
+      </a>)}
+      <button className="shortcut add-shortcut" onClick={onAdd}><span className="shortcut-icon"><Plus size={24}/></span><span>Add</span></button>
+    </div>
+  </article>;
+}
+
+function HomeScene({ now, playing, liked, volume, onTogglePlay, onToggleLike, onVolume }) {
+  const time = formatTime(now);
+  return <section className="home-scene">
+    <svg className="home-filter-definitions" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="kawaii-outline" colorInterpolationFilters="sRGB">
+          <feMorphology in="SourceAlpha" operator="erode" radius="2" result="eroded" />
+          <feComposite in="SourceAlpha" in2="eroded" operator="out" result="outline" />
+          <feFlood floodColor="#ffffff" result="outlineColor" />
+          <feComposite in="outlineColor" in2="outline" operator="in" />
+        </filter>
+      </defs>
+    </svg>
+    <div className="home-art" aria-hidden="true">
+      <img src={backgroundLayer} className="home-layer layer-1" alt="" />
+      <CursorGrid className="home-cursor-grid" cellSize={55} color="#79b7ff" radius={240} falloff="smooth" holdTime={400} fadeDuration={800} lineWidth={1.1} maxOpacity={0.25} fillOpacity={0} gridOpacity={0} cellRadius={0} clickPulse pulseSpeed={600} />
+      <img src={kawaiiBackLayer} className="home-layer layer-2" alt="" />
+      <img src={animeShadowLayer} className="home-layer layer-3" alt="" />
+      <img src={animeLayer} className="home-layer layer-4" alt="" />
+      <img src={kawaiiBackLayer} className="home-layer layer-5" alt="" />
+    </div>
+    <section className="home-clock" aria-label={`Current time ${time.time} ${time.period}`}><div>{time.time}<small>{time.period}</small></div><p>{formatDate(now)}</p></section>
+    <section className="mini-player" aria-label="Music player">
+      <div className="mini-album" aria-label="Album art" />
+      <div className="player-controls"><button className={liked ? "liked" : ""} onClick={onToggleLike} aria-label="Like track"><Heart size={15} fill={liked ? "currentColor" : "none"}/></button><button aria-label="Previous track"><SkipBack size={17} fill="currentColor"/></button><button onClick={onTogglePlay} aria-label={playing ? "Pause" : "Play"}>{playing ? <span className="pause-icon">Ⅱ</span> : <Play size={18} fill="currentColor"/>}</button><button aria-label="Next track"><SkipForward size={17} fill="currentColor"/></button><label className="volume-control" aria-label="Volume"><Volume2 size={14}/><input type="range" min="0" max="100" value={volume} onChange={(event) => onVolume(Number(event.target.value))}/></label></div>
+    </section>
+  </section>;
+}
+
+function ProfilePage({ user, onSignIn, shortcuts, editing, onToggleEditing, onEdit, onRemove, onAdd }) {
   return <section className="utility-page">
     <section className="utility-hero profile-hero"><span className="utility-icon"><UserRound size={25}/></span><div><p className="eyebrow">YOUR SPACE</p><h2>{user ? `Hi, ${user.name}.` : "A space made for you."}</h2><p>{user ? "Your shortcuts, playlists, and daily rhythm all belong here." : "Sign in to make your dashboard and music library truly yours."}</p>{!user && <button type="button" className="utility-primary" onClick={onSignIn}>Sign in to continue</button>}</div></section>
     <section className="utility-grid profile-grid">
       <article className="utility-panel account-summary"><span className="profile-avatar-large">{user ? user.name.slice(0, 2).toUpperCase() : "KM"}</span><div><p className="eyebrow">{user ? "SIGNED IN" : "GUEST MODE"}</p><h3>{user?.name || "Kawaiii member"}</h3><p>{user?.email || "Your personal dashboard is ready when you are."}</p></div></article>
       <article className="utility-panel profile-stats"><div><strong>8</strong><span>Shortcuts</span></div><div><strong>3</strong><span>Playlists</span></div><div><strong>12h</strong><span>Focus time</span></div></article>
     </section>
+    <QuickAccess shortcuts={shortcuts} editing={editing} onToggleEditing={onToggleEditing} onEdit={onEdit} onRemove={onRemove} onAdd={onAdd}/>
   </section>;
 }
 
@@ -190,6 +238,9 @@ function App() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(() => readPlaylists()[0].id);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [playlistName, setPlaylistName] = useState("");
+  const [playerPlaying, setPlayerPlaying] = useState(false);
+  const [playerLiked, setPlayerLiked] = useState(false);
+  const [volume, setVolume] = useState(68);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -318,12 +369,13 @@ function App() {
   const openMusicPage = () => setActivePage("music");
 
   return (
-    <div className={dark ? "app dark" : "app"}>
+    <ClickSpark sparkColor="#79b7ff" sparkSize={12} sparkRadius={15} sparkCount={6} duration={400}>
+    <div className={`${dark ? "app dark" : "app"} ${activePage === "dashboard" ? "home-app" : ""}`}>
       <div className="site-identity"><span className="brand-dot"><Sparkles size={25} fill="currentColor" /></span><span>Kawaiii</span></div>
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`} aria-expanded={menuOpen}>
         <div className="nav-rail">
           <nav className="nav-list">
-            {navItems.map((item, index) => <button className={`nav-button ${item.page === activePage ? "active" : ""}`} key={item.label} aria-label={item.label} data-tooltip={item.label} style={{ "--item-delay": `${100 + index * 55}ms` }} onClick={() => handleNavigation(item)}><item.Icon size={21}/></button>)}
+            {navItems.map((item, index) => <button className={`nav-button ${item.page === activePage ? "active" : ""}`} key={item.label} aria-label={item.label} data-tooltip={item.label} style={{ "--item-delay": `${100 + index * 55}ms` }} onClick={() => handleNavigation(item)}><item.Icon size={21}/><span>{item.label}</span></button>)}
             <button className="theme-switch" onClick={() => setDark(!dark)} aria-label="Toggle dark mode" data-tooltip="Toggle theme" style={{ "--item-delay": `${100 + navItems.length * 55}ms` }}><span className="theme-icon">{dark ? <Moon size={20}/> : <Sun size={20}/>}</span></button>
           </nav>
           <div className="sidebar-bottom">
@@ -338,10 +390,10 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="greeting"><p>{headingLabel}</p><h1>{headingTitle}</h1></div>
-          <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => openAuth(user ? "profile" : "login")}>{user ? user.name.slice(0, 2).toUpperCase() : "KM"}</button></div>
+          <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => openAuth(user ? "profile" : "login")}><span>{user ? user.name : "USER"}</span><UserRound size={24} fill="currentColor"/></button></div>
         </header>
 
-        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "profile" ? <ProfilePage user={user} onSignIn={() => openAuth("login")}/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <>
+        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "profile" ? <ProfilePage user={user} onSignIn={() => openAuth("login")} shortcuts={shortcuts} editing={editing} onToggleEditing={() => setEditing(!editing)} onEdit={openEditShortcut} onRemove={removeShortcut} onAdd={openAdd}/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <>
         <section className="clock-section">
           <div className="clock"><span>{time.time}</span><span className="clock-period">{time.period}</span></div>
           <p className="date">{formatDate(now)}</p>
@@ -392,6 +444,7 @@ function App() {
         <form className="shortcut-modal auth-modal" onSubmit={submitAuth} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setAuthOpen(false)}><X size={18}/></button><p className="eyebrow">KAWAIII ACCOUNT</p><h2>{authMode === "login" ? "Welcome back" : "Create account"}</h2>{authMode === "register" && <label>Name<input required autoFocus value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} placeholder="Your name" /></label>}<label>Email<input required autoFocus={authMode === "login"} type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="you@example.com" /></label><label>Password<input required minLength="8" type="password" value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} placeholder="At least 8 characters" /></label>{authError && <p className="auth-error">{authError}</p>}<button className="save-button" type="submit" disabled={authLoading}>{authLoading ? "Please wait..." : authMode === "login" ? "Sign in" : "Create account"}</button><p className="auth-switch">{authMode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>{authMode === "login" ? "Create account" : "Sign in"}</button></p></form>}
       </div>}
     </div>
+    </ClickSpark>
   );
 }
 
