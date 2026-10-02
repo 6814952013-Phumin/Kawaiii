@@ -393,47 +393,7 @@ function App() {
           <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => openAuth(user ? "profile" : "login")}><span>{user ? user.name : "USER"}</span><UserRound size={24} fill="currentColor"/></button></div>
         </header>
 
-        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "profile" ? <ProfilePage user={user} onSignIn={() => openAuth("login")} shortcuts={shortcuts} editing={editing} onToggleEditing={() => setEditing(!editing)} onEdit={openEditShortcut} onRemove={removeShortcut} onAdd={openAdd}/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <>
-        <section className="clock-section">
-          <div className="clock"><span>{time.time}</span><span className="clock-period">{time.period}</span></div>
-          <p className="date">{formatDate(now)}</p>
-        </section>
-
-        <section className="dashboard-grid">
-          <article className="panel focus-panel">
-            <div className="panel-heading"><div><p className="eyebrow">TODAY'S FOCUS</p><h2>Latest listen</h2></div><button className="icon-control" title="Focus settings"><Settings size={17}/></button></div>
-            <button type="button" className="focus-track-button" onClick={openMusicPage} aria-label="Open music page">
-              <div className="focus-track-art" style={{ "--track-cover": latestTrack.cover }}><img src={vinylRecordImage} alt="Vinyl record" className="vinyl-record-image focus-record" /></div>
-            </button>
-            <div className="focus-track-meta">
-              <span className="focus-track-label">NOW PLAYING</span>
-              <strong>{latestTrack.title}</strong>
-              <small>{latestTrack.artist}</small>
-            </div>
-            <button className="outline-button" type="button" onClick={openMusicPage}><Play size={16} fill="currentColor"/> Resume listening</button>
-          </article>
-
-          <article className="panel quick-panel">
-            <div className="panel-heading"><div><p className="eyebrow">YOUR FAVOURITES</p><h2>Quick Access</h2></div><button className={`edit-button ${editing ? "selected" : ""}`} onClick={() => setEditing(!editing)}>{editing ? "Done" : "Edit"}</button></div>
-            <div className="shortcut-grid">
-              {shortcuts.map((shortcut, index) => <a className={`shortcut ${editing ? "shortcut-editing" : ""}`} href={shortcut.url || "#"} target="_blank" rel="noreferrer" key={shortcut._id || `${shortcut.name}-${index}`} onClick={(event) => editing && openEditShortcut(event, shortcut, index)}>
-                <span className="shortcut-icon" style={{ "--shortcut-color": shortcut.color }}>{shortcut.imageUrl ? <img src={shortcut.imageUrl} alt="" /> : shortcut.icon}</span><span>{shortcut.name}</span>{editing && <><span className="edit-shortcut" aria-hidden="true"><Pencil size={12}/></span><button className="remove-shortcut" onClick={(event) => removeShortcut(event, shortcut, index)} aria-label={`Remove ${shortcut.name}`}><X size={12}/></button></>}
-              </a>)}
-              <button className="shortcut add-shortcut" onClick={openAdd}><span className="shortcut-icon"><Plus size={24}/></span><span>Add</span></button>
-            </div>
-          </article>
-
-          <article className="panel agenda-panel">
-            <div className="panel-heading"><div><p className="eyebrow">UP NEXT</p><h2>Today's agenda</h2></div><button className="icon-control" title="Open calendar"><CalendarDays size={17}/></button></div>
-            <div className="agenda-list">
-              <div className="agenda-item"><span className="agenda-time">10:30</span><span className="agenda-line cyan"/><div><strong>Design review</strong><small>Product team</small></div></div>
-              <div className="agenda-item"><span className="agenda-time">13:00</span><span className="agenda-line yellow"/><div><strong>Deep work</strong><small>Project Kawaiii</small></div></div>
-              <div className="agenda-item"><span className="agenda-time">16:30</span><span className="agenda-line pink"/><div><strong>Weekly reset</strong><small>Personal</small></div></div>
-            </div>
-            <button className="text-button">View calendar <ChevronRight size={16}/></button>
-          </article>
-        </section>
-        </>}
+        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "profile" ? <ProfilePage user={user} onSignIn={() => openAuth("login")} shortcuts={shortcuts} editing={editing} onToggleEditing={() => setEditing(!editing)} onEdit={openEditShortcut} onRemove={removeShortcut} onAdd={openAdd}/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <HomeScene now={now} playing={playerPlaying} liked={playerLiked} volume={volume} onTogglePlay={() => setPlayerPlaying((value) => !value)} onToggleLike={() => setPlayerLiked((value) => !value)} onVolume={setVolume}/>}
         <footer><span><span className="footer-dot"/> All systems calm</span><span>Made for your day</span></footer>
       </main>
 
