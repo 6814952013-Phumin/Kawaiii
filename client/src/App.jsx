@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import {
   BarChart3, Bell, CalendarDays, ChevronRight, Clock3, Disc3, Heart,
   House, ListPlus, Menu, Moon, Music2, Pencil, Play, Plus, Search,
-  Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2
+  Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2, Eye, EyeOff
 } from "lucide-react";
 import vinylRecordImage from "../image/vinyl-record.avif";
 import backgroundLayer from "../image/Backgraoud1.png?inline";
 import kawaiiBackLayer from "../image/kawaii1.png?inline";
 import animeShadowLayer from "../image/animeBlue.png?inline";
 import animeLayer from "../image/anime.png?inline";
+import welcomeBackground from "../image/Welcome.png";
 import CursorGrid from "./CursorGrid";
 import ClickSpark from "./ClickSpark";
 
@@ -69,6 +70,42 @@ const readApiResponse = async (response) => {
   try { return text ? JSON.parse(text) : {}; }
   catch { throw new Error(text || `Request failed with status ${response.status}`); }
 };
+
+function AuthScreen({ mode, form, errors, loading, onChange, onSubmit, onSwitch, onClose }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [scale, setScale] = useState(() => Math.min(window.innerWidth / 1920, window.innerHeight / 1080));
+  const isLogin = mode === "login";
+  useEffect(() => {
+    const updateScale = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080));
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+  const field = (name, label, type = "text", placeholder = "") => <div className={`auth-field auth-field-${name}`}>
+    <label htmlFor={`auth-${name}`}>{label}</label>
+    <div className={`auth-input-frame ${errors[name] ? "has-error" : ""}`}>
+      <input id={`auth-${name}`} name={name} type={type === "password" && showPassword ? "text" : type} value={form[name]} onChange={onChange} placeholder={placeholder} autoComplete={name === "password" ? (isLogin ? "current-password" : "new-password") : name} aria-invalid={Boolean(errors[name])} />
+      {type === "password" && <button type="button" className="password-visibility" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <Eye size={20}/> : <EyeOff size={20}/>}</button>}
+    </div>
+    {errors[name] && <p className="auth-field-error" role="alert">{errors[name]}</p>}
+  </div>;
+
+  return <div className="auth-page" role="dialog" aria-modal="true" aria-label={isLogin ? "Log in" : "Create account"}>
+    <div className="auth-background" style={{ backgroundImage: `url(${welcomeBackground})` }} aria-hidden="true" />
+    <div className="auth-stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
+      <form className={`auth-canvas auth-canvas-${mode}`} noValidate onSubmit={onSubmit}>
+        <button className="auth-close" type="button" onClick={onClose} aria-label="Close account page"><X size={24}/></button>
+        <p className="auth-kicker">KAWAIII ACCOUNT</p>
+        <h1>{isLogin ? "Welcome back" : "Create account"}</h1>
+        {field("name", "USERNAME", "text", isLogin ? "email/username" : "")}
+        {!isLogin && field("email", "EMAIL", "email")}
+        {field("password", "PASSWORD", "password")}
+        <p className="auth-page-error" role="alert">{errors.general}</p>
+        <p className="auth-page-switch">{isLogin ? "New here?" : "Already have an account?"} <button type="button" onClick={onSwitch}>{isLogin ? "Create account" : "Sign in"}</button></p>
+        <button className="auth-submit" type="submit" disabled={loading}>{loading ? "PLEASE WAIT..." : isLogin ? "LOG IN" : "Create account"}</button>
+      </form>
+    </div>
+  </div>;
+}
 
 function MusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCreate, onSaveTrack }) {
   const selectedPlaylist = playlists.find((playlist) => playlist.id === selectedPlaylistId) || playlists[0];
@@ -224,7 +261,7 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });
-  const [authError, setAuthError] = useState("");
+  const [authErrors, setAuthErrors] = useState({});
   const [authLoading, setAuthLoading] = useState(false);
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("kawaiii-user")) || null; }
@@ -290,22 +327,38 @@ function App() {
     }
   };
   const openAuth = (mode = "login") => {
-    setAuthMode(mode); setAuthError(""); setAuthForm({ name: "", email: "", password: "" }); setAuthOpen(true);
+    setAuthMode(mode); setAuthErrors({}); setAuthForm({ name: "", email: "", password: "" }); setAuthOpen(true);
+  };
+  const updateAuthField = (event) => {
+    const { name, value } = event.target;
+    setAuthForm((current) => ({ ...current, [name]: value }));
+    setAuthErrors((current) => ({ ...current, [name]: "", general: "" }));
+  };
+  const switchAuthMode = () => {
+    setAuthMode((current) => current === "login" ? "register" : "login");
+    setAuthErrors({});
+    setAuthForm({ name: "", email: "", password: "" });
   };
   const submitAuth = async (event) => {
     event.preventDefault();
-    setAuthLoading(true); setAuthError("");
+    const errors = {};
+    if (!authForm.name.trim()) errors.name = "Username is required.";
+    if (authMode === "register" && !/^\S+@\S+\.\S+$/.test(authForm.email.trim())) errors.email = "Enter a valid email address.";
+    if (!authForm.password) errors.password = "Password is required.";
+    else if (authForm.password.length < 8) errors.password = "Password must be at least 8 characters.";
+    if (Object.keys(errors).length) { setAuthErrors(errors); return; }
+    setAuthLoading(true); setAuthErrors({});
     try {
       const response = await fetch(`${apiBase}/auth/${authMode === "login" ? "login" : "register"}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authMode === "login" ? { email: authForm.email, password: authForm.password } : authForm),
+        body: JSON.stringify(authMode === "login" ? { email: authForm.name, password: authForm.password } : authForm),
       });
       const data = await readApiResponse(response);
       if (!response.ok) throw new Error(data.message || "Unable to continue");
       localStorage.setItem("kawaiii-token", data.token);
       localStorage.setItem("kawaiii-user", JSON.stringify(data.user));
-      setUser(data.user); setAuthOpen(false);
-    } catch (error) { setAuthError(error.message || "Cannot reach the server"); }
+      setUser(data.user); setActivePage("dashboard"); setAuthOpen(false);
+    } catch (error) { setAuthErrors({ general: error.message || "Cannot reach the server" }); }
     finally { setAuthLoading(false); }
   };
   const logout = () => { localStorage.removeItem("kawaiii-token"); localStorage.removeItem("kawaiii-user"); setUser(null); };
@@ -370,7 +423,7 @@ function App() {
 
   return (
     <ClickSpark sparkColor="#79b7ff" sparkSize={12} sparkRadius={15} sparkCount={6} duration={400}>
-    <div className={`${dark ? "app dark" : "app"} ${activePage === "dashboard" ? "home-app" : ""}`}>
+    <div className={`${dark ? "app dark" : "app"} page-${activePage} ${activePage === "dashboard" ? "home-app" : ""}`}>
       <div className="site-identity"><span className="brand-dot"><Sparkles size={25} fill="currentColor" /></span><span>Kawaiii</span></div>
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`} aria-expanded={menuOpen}>
         <div className="nav-rail">
@@ -399,10 +452,7 @@ function App() {
 
       {modalOpen && <div className="modal-backdrop" onMouseDown={() => setModalOpen(false)}><form className="shortcut-modal shortcut-editor-modal" onSubmit={saveShortcut} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setModalOpen(false)}><X size={18}/></button><p className="eyebrow">{editingShortcut ? "EDIT SHORTCUT" : "NEW SHORTCUT"}</p><h2>{editingShortcut ? "Update favourite" : "Add a favourite"}</h2><label>Name<input required autoFocus value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="e.g. Figma" /></label><label>Link<input required type="url" value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder="https://" /></label><label>Accent colour<input type="color" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} /></label><label>Icon image URL <small>Optional — use a direct image link</small><input value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} placeholder="https://example.com/icon.png" /></label><label className="image-upload-label">Upload icon image <small>{shortcutImageUploading ? "Uploading to Vercel Blob..." : "PNG, JPG, WEBP, or GIF · max 600 KB"}</small><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={selectShortcutImage} disabled={shortcutImageUploading} /></label>{shortcutImageError && <p className="shortcut-image-error">{shortcutImageError}</p>}{form.imageUrl && <div className="shortcut-image-preview"><img src={form.imageUrl} alt="Icon preview" /><button type="button" onClick={() => setForm({ ...form, imageUrl: "" })}>Remove image</button></div>}<button className="save-button" type="submit" disabled={shortcutImageUploading}>{editingShortcut ? "Save changes" : "Add shortcut"} <Plus size={17}/></button></form></div>}
       {playlistModalOpen && <div className="modal-backdrop" onMouseDown={() => setPlaylistModalOpen(false)}><form className="shortcut-modal music-modal" onSubmit={createPlaylist} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setPlaylistModalOpen(false)}><X size={18}/></button><span className="modal-music-icon"><ListPlus size={22}/></span><p className="eyebrow">NEW PLAYLIST</p><h2>Make it yours</h2><p className="music-modal-copy">Give your collection a name, then save songs from your frequently played chart.</p><label>Playlist name<input required autoFocus value={playlistName} onChange={(event) => setPlaylistName(event.target.value)} placeholder="e.g. Sunday soundtrack" /></label><button className="save-button" type="submit">Create playlist <Plus size={17}/></button></form></div>}
-      {authOpen && <div className="modal-backdrop" onMouseDown={() => setAuthOpen(false)}>
-        {authMode === "profile" && user ? <section className="shortcut-modal account-panel" onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" onClick={() => setAuthOpen(false)}><X size={18}/></button><span className="account-avatar">{user.name.slice(0, 2).toUpperCase()}</span><p className="eyebrow">SIGNED IN</p><h2>{user.name}</h2><p className="account-email">{user.email}</p><button className="logout-button" onClick={() => { logout(); setAuthOpen(false); }}>Sign out</button></section> :
-        <form className="shortcut-modal auth-modal" onSubmit={submitAuth} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setAuthOpen(false)}><X size={18}/></button><p className="eyebrow">KAWAIII ACCOUNT</p><h2>{authMode === "login" ? "Welcome back" : "Create account"}</h2>{authMode === "register" && <label>Name<input required autoFocus value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} placeholder="Your name" /></label>}<label>Email<input required autoFocus={authMode === "login"} type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="you@example.com" /></label><label>Password<input required minLength="8" type="password" value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} placeholder="At least 8 characters" /></label>{authError && <p className="auth-error">{authError}</p>}<button className="save-button" type="submit" disabled={authLoading}>{authLoading ? "Please wait..." : authMode === "login" ? "Sign in" : "Create account"}</button><p className="auth-switch">{authMode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setAuthError(""); }}>{authMode === "login" ? "Create account" : "Sign in"}</button></p></form>}
-      </div>}
+      {authOpen && (authMode === "profile" && user ? <div className="modal-backdrop" onMouseDown={() => setAuthOpen(false)}><section className="shortcut-modal account-panel" onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" onClick={() => setAuthOpen(false)}><X size={18}/></button><span className="account-avatar">{user.name.slice(0, 2).toUpperCase()}</span><p className="eyebrow">SIGNED IN</p><h2>{user.name}</h2><p className="account-email">{user.email}</p><button className="logout-button" onClick={() => { logout(); setAuthOpen(false); }}>Sign out</button></section></div> : <AuthScreen mode={authMode} form={authForm} errors={authErrors} loading={authLoading} onChange={updateAuthField} onSubmit={submitAuth} onSwitch={switchAuthMode} onClose={() => setAuthOpen(false)} />)}
     </div>
     </ClickSpark>
   );

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Lilita+One&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 * { box-sizing: border-box; }
@@ -270,3 +270,46 @@ footer { display: flex; justify-content: space-between; margin-top: 25px; color:
 .app:not(.home-app) .nav-button.active { color: #555b63; background: #cdd3e0; box-shadow: none; }
 .app:not(.home-app) .nav-button::after { display: none; }
 @media (max-width: 760px) { .app:not(.home-app) .sidebar { top: auto; bottom: 15px; left: 8px; width: calc(100% - 16px); }.app:not(.home-app) .nav-list { grid-template-columns: repeat(5, 1fr); gap: 5px; }.app:not(.home-app) .nav-button { width: 100%; height: 44px; padding: 0; justify-content: center; border-radius: 12px; }.app:not(.home-app) .nav-button span { display: none; }.app:not(.home-app) .nav-button svg { width: 23px; height: 23px; } }
+
+/* Account pages use the same fixed 1920 × 1080 canvas composition as Home. */
+.auth-page { position: fixed; z-index: 30; inset: 0; overflow: hidden; background: #121619; }
+.auth-background { position: fixed; z-index: 0; inset: 0; pointer-events: none; background-position: center; background-repeat: no-repeat; background-size: cover; }
+.auth-stage { position: absolute; z-index: 1; top: 50%; left: 50%; width: 1920px; height: 1080px; transform-origin: center center; }
+.auth-canvas { position: absolute; top: 285px; left: 752px; width: 416px; height: 550px; color: #fff; font-family: "Barlow Condensed", sans-serif; }
+.auth-canvas h1 { margin: 6px 0 0 -2px; color: #fff; font: 400 64px/.94 "Lilita One", "Arial Rounded MT Bold", sans-serif; letter-spacing: .2px; transform: scaleX(.89); transform-origin: left center; white-space: nowrap; }
+.auth-kicker { margin: 0; color: #fff; font: 600 22px/1 "Barlow Condensed", sans-serif; }
+.auth-field { position: absolute; left: 0; width: 416px; }
+.auth-field-name { top: 158px; }
+.auth-canvas-login .auth-field-password { top: 275px; }
+.auth-canvas-register .auth-field-email { top: 273px; }
+.auth-canvas-register .auth-field-password { top: 391px; }
+.auth-field > label { position: absolute; z-index: 1; top: -21px; left: 29px; padding: 0 4px; color: #fff; background: #151a1d; font: 700 18px/1 "Barlow Condensed", sans-serif; letter-spacing: .25px; }
+.auth-input-frame { position: relative; width: 416px; height: 48px; overflow: hidden; border: 2px solid rgba(255,255,255,.93); border-left-width: 4px; border-right-width: 4px; border-radius: 999px; background: rgba(17,21,24,.18); box-shadow: inset 8px 0 5px -8px #fff, inset -8px 0 5px -8px #fff; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.auth-input-frame:focus-within { border-color: #fff; background: rgba(255,255,255,.055); box-shadow: 0 0 12px rgba(255,255,255,.17), inset 8px 0 5px -8px #fff, inset -8px 0 5px -8px #fff; }
+.auth-input-frame.has-error { border-color: #ed8d95; }
+.auth-input-frame input { width: 100%; height: 100%; padding: 0 48px 0 27px; border: 0; outline: 0; color: #fff; background: transparent; font: 400 20px "Barlow Condensed", sans-serif; }
+.auth-input-frame input::placeholder { color: #a5a8aa; opacity: 1; }
+.password-visibility { position: absolute; top: 0; right: 17px; width: 42px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; color: rgba(255,255,255,.48); background: transparent; transition: color .18s ease; }
+.password-visibility:hover { color: #fff; }
+.auth-field-error { position: absolute; top: 50px; left: 27px; margin: 0; color: #f29aa2; font: 600 15px/1 "Barlow Condensed", sans-serif; }
+.auth-page-error { position: absolute; top: 359px; width: 100%; min-height: 16px; margin: 0; color: #f29aa2; text-align: center; font: 600 15px/1 "Barlow Condensed", sans-serif; }
+.auth-canvas-register .auth-page-error { top: 470px; }
+.auth-page-switch { position: absolute; top: 331px; width: 100%; margin: 0; color: #fff; text-align: center; font: 400 22px/24px "Barlow Condensed", sans-serif; }
+.auth-canvas-register .auth-page-switch { top: 442px; }
+.auth-page-switch button { padding: 0; border: 0; color: #fff; background: transparent; font: 700 22px/24px "Barlow Condensed", sans-serif; }
+.auth-page-switch button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.auth-submit { position: absolute; top: 384px; left: 121px; width: 173px; height: 42px; border: 1px solid rgba(255,255,255,.9); border-radius: 6px; color: #fff; background: rgba(255,255,255,0); font: 600 17px "Barlow Condensed", sans-serif; letter-spacing: .5px; transition: background .18s ease, border-color .18s ease; }
+.auth-canvas-register .auth-submit { top: 499px; font-size: 20px; font-weight: 400; text-transform: none; }
+.auth-submit:hover:not(:disabled) { background: rgba(255,255,255,.15); }
+.auth-submit:disabled { cursor: wait; opacity: .65; }
+.auth-close { position: fixed; top: 30px; right: 35px; width: 46px; height: 46px; display: grid; place-items: center; border: 0; border-radius: 50%; color: rgba(255,255,255,.72); background: rgba(0,0,0,.16); opacity: .55; transition: opacity .18s ease, background .18s ease; }
+.auth-close:hover { background: rgba(255,255,255,.14); opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .auth-input-frame, .auth-submit, .password-visibility, .auth-close { transition: none; } }
+
+/* Keep the account control consistent with Home on the requested section pages. */
+.app:is(.page-music, .page-calendar, .page-settings) .top-actions { display: block; }
+.app:is(.page-music, .page-calendar, .page-settings) .top-actions > button:not(.avatar) { display: none; }
+.app:is(.page-music, .page-calendar, .page-settings) .top-actions .avatar { width: auto; height: 36px; padding: 0 0 0 10px; display: flex; align-items: center; gap: 13px; border-radius: 0; color: #fff !important; background: transparent !important; font: 400 27px "Barlow Condensed", sans-serif; }
+.app:is(.page-music, .page-calendar, .page-settings) .avatar span { height: 32px; padding: 0 10px; display: flex; align-items: center; border-inline: 1px solid rgba(255,255,255,.72); }
+.app:is(.page-music, .page-calendar, .page-settings) .avatar svg { fill: #fff; stroke-width: 0; }
+@media (max-width: 760px) { .app:is(.page-music, .page-calendar, .page-settings) .top-actions .avatar { font-size: 20px; } }
