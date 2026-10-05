@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import {
   BarChart3, Bell, CalendarDays, ChevronRight, Clock3, Disc3, Heart,
   House, ListPlus, Menu, Moon, Music2, Pencil, Play, Plus, Search,
-  Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2, Eye, EyeOff
+  Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2, Eye, EyeOff,
+  LogOut, Pause
 } from "lucide-react";
 import vinylRecordImage from "../image/vinyl-record.avif";
 import backgroundLayer from "../image/Backgraoud1.png?inline";
@@ -25,7 +26,7 @@ const starterShortcuts = [
 ];
 
 const navItems = [
-  { label: "Home", Icon: UserRound, page: "dashboard" }, { label: "Profile", Icon: House, page: "profile" },
+  { label: "Home", Icon: House, page: "dashboard" }, { label: "Profile", Icon: UserRound, page: "profile" },
   { label: "Music", Icon: Music2, page: "music" }, { label: "Calendar", Icon: CalendarDays, page: "calendar" },
   { label: "Setting", Icon: Settings, page: "settings" },
 ];
@@ -65,6 +66,35 @@ const formatDate = (date) => new Intl.DateTimeFormat("en-US", {
   weekday: "long", day: "numeric", month: "long"
 }).format(date);
 const apiBase = import.meta.env.VITE_API_URL || "/api";
+const profileOwnerId = (user) => String(user?._id || user?.id || user?.email || "").trim().toLowerCase();
+const profileStorageKey = (user) => {
+  const owner = profileOwnerId(user);
+  return owner ? `kawaiii-profile:${encodeURIComponent(owner)}` : "kawaiii-profile:guest";
+};
+const readProfile = (user) => {
+  const key = profileStorageKey(user);
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try { return JSON.parse(stored) || {}; }
+    catch { return {}; }
+  }
+
+  const legacy = localStorage.getItem("kawaiii-profile");
+  if (!legacy) return {};
+  try {
+    const profile = JSON.parse(legacy) || {};
+    const owner = profileOwnerId(user);
+    const legacyOwner = localStorage.getItem("kawaiii-profile-owner");
+    if (!owner) return profile;
+    if (legacyOwner && legacyOwner !== owner) return {};
+    localStorage.setItem(key, JSON.stringify(profile));
+    localStorage.setItem("kawaiii-profile-owner", owner);
+    localStorage.removeItem("kawaiii-profile");
+    return profile;
+  } catch {
+    return {};
+  }
+};
 const readApiResponse = async (response) => {
   const text = await response.text();
   try { return text ? JSON.parse(text) : {}; }
@@ -224,15 +254,54 @@ function HomeScene({ now, playing, liked, volume, onTogglePlay, onToggleLike, on
   </section>;
 }
 
-function ProfilePage({ user, onSignIn, shortcuts, editing, onToggleEditing, onEdit, onRemove, onAdd }) {
-  return <section className="utility-page">
-    <section className="utility-hero profile-hero"><span className="utility-icon"><UserRound size={25}/></span><div><p className="eyebrow">YOUR SPACE</p><h2>{user ? `Hi, ${user.name}.` : "A space made for you."}</h2><p>{user ? "Your shortcuts, playlists, and daily rhythm all belong here." : "Sign in to make your dashboard and music library truly yours."}</p>{!user && <button type="button" className="utility-primary" onClick={onSignIn}>Sign in to continue</button>}</div></section>
-    <section className="utility-grid profile-grid">
-      <article className="utility-panel account-summary"><span className="profile-avatar-large">{user ? user.name.slice(0, 2).toUpperCase() : "KM"}</span><div><p className="eyebrow">{user ? "SIGNED IN" : "GUEST MODE"}</p><h3>{user?.name || "Kawaiii member"}</h3><p>{user?.email || "Your personal dashboard is ready when you are."}</p></div></article>
-      <article className="utility-panel profile-stats"><div><strong>8</strong><span>Shortcuts</span></div><div><strong>3</strong><span>Playlists</span></div><div><strong>12h</strong><span>Focus time</span></div></article>
-    </section>
-    <QuickAccess shortcuts={shortcuts} editing={editing} onToggleEditing={onToggleEditing} onEdit={onEdit} onRemove={onRemove} onAdd={onAdd}/>
-  </section>;
+function ProfilePage({ user, onUserChange, onAvatarChange, onLogout }) {
+  const [profile, setProfile] = useState(() => readProfile(user));
+  const [editingName, setEditingName] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [favoritesEditing, setFavoritesEditing] = useState(false);
+  const [favoriteDraft, setFavoriteDraft] = useState(null);
+  const [playing, setPlaying] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const name = user?.name || profile.name || "Username";
+  const bio = profile.bio || "";
+  const favorites = profile.favorites || [];
+  const tracks = ["Music Name", "Music Name", "Music Name", "Music Name", "Music Name"];
+  const saveProfile = (updates) => {
+    const next = { ...profile, ...updates };
+    setProfile(next); localStorage.setItem(profileStorageKey(user), JSON.stringify(next));
+    if (updates.avatarImage) onAvatarChange(updates.avatarImage);
+    if (updates.name && user) { const nextUser = { ...user, name: updates.name }; localStorage.setItem("kawaiii-user", JSON.stringify(nextUser)); onUserChange(nextUser); }
+    setSaved(true); window.setTimeout(() => setSaved(false), 2000);
+  };
+  const chooseImage = (key) => (event) => {
+    const file = event.target.files?.[0]; if (!file) return;
+    const reader = new FileReader(); reader.onload = () => saveProfile({ [key]: reader.result }); reader.readAsDataURL(file);
+  };
+  const saveFavorite = (event) => {
+    event.preventDefault(); const form = new FormData(event.currentTarget); const siteName = String(form.get("siteName") || "").trim(); let url = String(form.get("siteUrl") || "").trim();
+    if (!siteName || !url) return; if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    const list = [...favorites]; list[favoriteDraft] = { name: siteName, url }; saveProfile({ favorites: list }); setFavoriteDraft(null);
+  };
+  return <main className="profile-main">
+      <section className="banner" style={profile.headerImage ? { backgroundImage: `url(${profile.headerImage})` } : undefined}>
+        <label className="header-edit">Edit Header <Pencil size={27} fill="currentColor"/><input type="file" accept="image/*" onChange={chooseImage("headerImage")}/></label>
+      </section>
+      <div className="profile-grid">
+      <aside className="profile-card">
+        <label className={`profile-photo ${profile.avatarImage ? "has-image" : ""}`} style={profile.avatarImage ? { backgroundImage: `url(${profile.avatarImage})` } : undefined}><span>Edit Profile <Pencil size={27} fill="currentColor"/></span><input type="file" accept="image/*" onChange={chooseImage("avatarImage")}/></label>
+        <div className="profile-name">{editingName ? <input autoFocus defaultValue={name} onBlur={(e) => { if (e.currentTarget.dataset.cancel !== "true") saveProfile({ name: e.target.value.trim() || name }); setEditingName(false); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") { e.currentTarget.dataset.cancel = "true"; setEditingName(false); } }}/> : <><span>{name}</span><button onClick={() => setEditingName(true)} aria-label="Edit username"><Pencil size={19} fill="currentColor"/></button></>}</div>
+        <p className="profile-handle">@User</p>
+        <div className="profile-bio">{editingBio ? <textarea autoFocus defaultValue={bio} placeholder="Add a description" onBlur={(e) => { if (e.currentTarget.dataset.cancel !== "true") saveProfile({ bio: e.target.value }); setEditingBio(false); }} onKeyDown={(e) => { if (e.key === "Escape") { e.currentTarget.dataset.cancel = "true"; setEditingBio(false); } if (e.key === "Enter" && !e.shiftKey) e.currentTarget.blur(); }}/> : <button onClick={() => setEditingBio(true)}>{bio || "Add a description"} <Pencil size={14} fill="currentColor"/></button>}</div>
+        <button className="profile-logout" onClick={onLogout}><LogOut size={23}/> Logout</button>
+      </aside>
+      <section className="favorites"><h2>Website Favorites</h2><article className="profile-panel favorite-panel"><button className={`favorite-edit ${favoritesEditing ? "done" : ""}`} onClick={() => { setFavoritesEditing(!favoritesEditing); setFavoriteDraft(null); }}>{favoritesEditing ? "Done" : "Edit"}</button><div className="favorite-grid">{Array.from({ length: Math.max(6, favorites.length + (favoritesEditing ? 1 : 0)) }, (_, index) => {
+        const favorite = favorites[index]; if (favoriteDraft === index) return <form className="favorite-form" key={`form-${index}`} onSubmit={saveFavorite}><input name="siteName" placeholder="Name" autoFocus/><input name="siteUrl" placeholder="https://"/><button>Save</button></form>;
+        return favorite ? <a className="favorite-tile" key={favorite.url + index} href={favoritesEditing ? undefined : favorite.url} target="_blank" rel="noreferrer" onClick={(e) => { if (favoritesEditing) e.preventDefault(); }}><span>{favorite.name.slice(0, 1).toUpperCase()}</span><small>{favorite.name}</small>{favoritesEditing && <button type="button" onClick={(e) => { e.preventDefault(); saveProfile({ favorites: favorites.filter((_, item) => item !== index) }); }}>×</button>}</a> : <button className="favorite-tile empty" key={`empty-${index}`} disabled={!favoritesEditing} onClick={() => setFavoriteDraft(index)}><Plus size={28}/></button>;
+      })}</div></article></section>
+      <section className="listen"><h2>Listen Often</h2><article className="profile-panel listen-panel"><div className="list">{tracks.map((track, index) => <div className={`listen-row ${playing === index ? "playing" : ""}`} key={index}><span className="album-placeholder">Music</span><span className="song-title">{playing === index ? <i className="equalizer"><b/><b/><b/></i> : track}</span><button onClick={() => setPlaying(playing === index ? null : index)} aria-label={`${playing === index ? "Pause" : "Play"} ${track}`}>{playing === index ? <Pause size={19} fill="currentColor"/> : <Play size={19} fill="currentColor"/>}</button>{playing === index && <i className="song-progress"/>}</div>)}</div></article></section>
+      </div>
+      {saved && <div className="profile-toast" role="status">Saved</div>}
+    </main>;
 }
 
 function SettingsPage({ dark, onToggleDark }) {
@@ -266,6 +335,9 @@ function App() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("kawaiii-user")) || null; }
     catch { return null; }
+  });
+  const [profileAvatar, setProfileAvatar] = useState(() => {
+    return readProfile(user)?.avatarImage || null;
   });
   const [shortcuts, setShortcuts] = useState(() => {
     const saved = localStorage.getItem("kawaiii-shortcuts");
@@ -357,11 +429,11 @@ function App() {
       if (!response.ok) throw new Error(data.message || "Unable to continue");
       localStorage.setItem("kawaiii-token", data.token);
       localStorage.setItem("kawaiii-user", JSON.stringify(data.user));
-      setUser(data.user); setActivePage("dashboard"); setAuthOpen(false);
+      setUser(data.user); setProfileAvatar(readProfile(data.user)?.avatarImage || null); setActivePage("dashboard"); setAuthOpen(false);
     } catch (error) { setAuthErrors({ general: error.message || "Cannot reach the server" }); }
     finally { setAuthLoading(false); }
   };
-  const logout = () => { localStorage.removeItem("kawaiii-token"); localStorage.removeItem("kawaiii-user"); setUser(null); };
+  const logout = () => { localStorage.removeItem("kawaiii-token"); localStorage.removeItem("kawaiii-user"); setUser(null); setProfileAvatar(null); setActivePage("dashboard"); openAuth("login"); };
   const saveShortcut = async (event) => {
     event.preventDefault();
     if (!form.name.trim()) return;
@@ -440,15 +512,15 @@ function App() {
         </div>
       </aside>
 
-      <main className="main-content">
+      {activePage === "profile" ? <ProfilePage user={user} onUserChange={setUser} onAvatarChange={setProfileAvatar} onLogout={logout}/> : <main className="main-content">
         <header className="topbar">
           <div className="greeting"><p>{headingLabel}</p><h1>{headingTitle}</h1></div>
-          <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => openAuth(user ? "profile" : "login")}><span>{user ? user.name : "USER"}</span><UserRound size={24} fill="currentColor"/></button></div>
+          <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => user ? setActivePage("profile") : openAuth("login")}><span>{user ? user.name : "USER"}</span>{user && profileAvatar ? <img className="account-avatar-image" src={profileAvatar} alt="" /> : <UserRound size={24} fill="currentColor"/>}</button></div>
         </header>
 
-        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "profile" ? <ProfilePage user={user} onSignIn={() => openAuth("login")} shortcuts={shortcuts} editing={editing} onToggleEditing={() => setEditing(!editing)} onEdit={openEditShortcut} onRemove={removeShortcut} onAdd={openAdd}/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <HomeScene now={now} playing={playerPlaying} liked={playerLiked} volume={volume} onTogglePlay={() => setPlayerPlaying((value) => !value)} onToggleLike={() => setPlayerLiked((value) => !value)} onVolume={setVolume}/>}
+        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <HomeScene now={now} playing={playerPlaying} liked={playerLiked} volume={volume} onTogglePlay={() => setPlayerPlaying((value) => !value)} onToggleLike={() => setPlayerLiked((value) => !value)} onVolume={setVolume}/>}
         <footer><span><span className="footer-dot"/> All systems calm</span><span>Made for your day</span></footer>
-      </main>
+      </main>}
 
       {modalOpen && <div className="modal-backdrop" onMouseDown={() => setModalOpen(false)}><form className="shortcut-modal shortcut-editor-modal" onSubmit={saveShortcut} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setModalOpen(false)}><X size={18}/></button><p className="eyebrow">{editingShortcut ? "EDIT SHORTCUT" : "NEW SHORTCUT"}</p><h2>{editingShortcut ? "Update favourite" : "Add a favourite"}</h2><label>Name<input required autoFocus value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="e.g. Figma" /></label><label>Link<input required type="url" value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} placeholder="https://" /></label><label>Accent colour<input type="color" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} /></label><label>Icon image URL <small>Optional — use a direct image link</small><input value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} placeholder="https://example.com/icon.png" /></label><label className="image-upload-label">Upload icon image <small>{shortcutImageUploading ? "Uploading to Vercel Blob..." : "PNG, JPG, WEBP, or GIF · max 600 KB"}</small><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={selectShortcutImage} disabled={shortcutImageUploading} /></label>{shortcutImageError && <p className="shortcut-image-error">{shortcutImageError}</p>}{form.imageUrl && <div className="shortcut-image-preview"><img src={form.imageUrl} alt="Icon preview" /><button type="button" onClick={() => setForm({ ...form, imageUrl: "" })}>Remove image</button></div>}<button className="save-button" type="submit" disabled={shortcutImageUploading}>{editingShortcut ? "Save changes" : "Add shortcut"} <Plus size={17}/></button></form></div>}
       {playlistModalOpen && <div className="modal-backdrop" onMouseDown={() => setPlaylistModalOpen(false)}><form className="shortcut-modal music-modal" onSubmit={createPlaylist} onMouseDown={(event) => event.stopPropagation()}><button className="close-modal" type="button" onClick={() => setPlaylistModalOpen(false)}><X size={18}/></button><span className="modal-music-icon"><ListPlus size={22}/></span><p className="eyebrow">NEW PLAYLIST</p><h2>Make it yours</h2><p className="music-modal-copy">Give your collection a name, then save songs from your frequently played chart.</p><label>Playlist name<input required autoFocus value={playlistName} onChange={(event) => setPlaylistName(event.target.value)} placeholder="e.g. Sunday soundtrack" /></label><button className="save-button" type="submit">Create playlist <Plus size={17}/></button></form></div>}
