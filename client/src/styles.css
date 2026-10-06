@@ -190,6 +190,65 @@ footer { display: flex; justify-content: space-between; margin-top: 25px; color:
 @media (max-width: 720px) { .quick-panel { min-height: 320px; }.shortcut-grid { grid-auto-rows: 104px; max-height: 222px; } }
 @media (max-width: 470px) { .shortcut-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
+.jp-artists .artist-artwork {
+  position: relative;
+  width: calc(200 * var(--u));
+  height: calc(200 * var(--u));
+  margin-bottom: calc(8 * var(--u));
+}
+
+.jp-artists .artist-artwork .artist-image {
+  width: 100%;
+  height: 100%;
+}
+
+.jp-artists .artist-play-button {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: calc(42 * var(--u));
+  height: calc(42 * var(--u));
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #232529;
+  background: #fff;
+  cursor: pointer;
+  z-index: 1;
+  transition: transform .2s ease, background-color .2s ease;
+}
+
+.jp-artists .artist-play-button:hover {
+  transform: scale(1.06);
+  background: #cdd3e0;
+}
+
+/* Japanese music library */
+.page-music { --u: calc(100vw / 1920); background:#171a1d; color:#fff; }
+.page-music .main-content { width:100%; min-width:0; min-height:100vh; padding:0; background:#171a1d; }
+.page-music .topbar, .page-music footer { display:none; }
+.jp-music-page { height:100vh; min-height:0; margin-left:calc(177 * var(--u)); padding:calc(26 * var(--u)) calc(55 * var(--u)) calc(20 * var(--u)) 0; display:grid; grid-template-rows:calc(130 * var(--u)) calc(300 * var(--u)) minmax(0, 1fr) calc(70 * var(--u)) 14px; gap:calc(14 * var(--u)); font-family:"Barlow Condensed",sans-serif; }
+.jp-music-page h2 { margin:0; font:600 calc(30 * var(--u))/1 "Barlow Condensed",sans-serif; color:#fff; }.jp-search { position:relative; width:calc(480 * var(--u)); height:calc(43 * var(--u)); margin:auto; padding:0 calc(16 * var(--u)); display:flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,.25); border-radius:999px; color:#747983; background:#36393f; }.jp-search input { width:100%; min-width:0; border:0; outline:0; color:#fff; background:transparent; font:400 calc(19 * var(--u)) "Barlow Condensed",sans-serif; }.search-results { position:absolute; z-index:20; top:calc(51 * var(--u)); left:0; width:100%; max-height:280px; padding:9px; overflow:auto; border:1px solid rgba(255,255,255,.22); border-radius:14px; background:#232529; box-shadow:0 16px 30px rgba(0,0,0,.35); }.search-results small { padding:5px 8px; display:block; color:#aab1bd; }.search-results button { width:100%; padding:8px; display:flex; justify-content:space-between; gap:10px; border:0; border-radius:7px; color:#fff; background:transparent; text-align:left; }.search-results button:hover { background:#36393f; }.search-results em { color:#9da3ae; font-style:normal; }.jp-layout { min-height:0; display:grid; grid-template-columns:calc(462 * var(--u)) minmax(0,1fr); grid-template-rows:calc(300 * var(--u)) minmax(0,1fr); column-gap:calc(24 * var(--u)); row-gap:calc(16 * var(--u)); }.jp-section { min-width:0; min-height:0; }.popular-tracks { padding-right:calc(12 * var(--u)); border-right:1px solid rgba(255,255,255,.23); }.jp-track-list { height:calc(260 * var(--u)); margin-top:calc(16 * var(--u)); overflow-y:auto; scrollbar-width:thin; scrollbar-color:#cdd3e0 transparent; }.jp-track-list::-webkit-scrollbar,.playlist-scroll::-webkit-scrollbar { width:5px; }.jp-track-list::-webkit-scrollbar-thumb,.playlist-scroll::-webkit-scrollbar-thumb { border-radius:9px; background:#cdd3e0; }.jp-track { width:100%; min-height:calc(70 * var(--u)); padding:calc(5 * var(--u)); display:grid; grid-template-columns:calc(30 * var(--u)) calc(60 * var(--u)) minmax(0,1fr) calc(42 * var(--u)) calc(28 * var(--u)); gap:calc(11 * var(--u)); align-items:center; border:0; border-radius:8px; color:#72767d; background:transparent; text-align:left; font:400 calc(20 * var(--u)) "Barlow Condensed",sans-serif; }.jp-track:hover { color:#fff; background:rgba(255,255,255,.06); }.jp-track img { width:calc(60 * var(--u)); height:calc(60 * var(--u)); border-radius:calc(8 * var(--u)); object-fit:cover; background:#91a2b2; }.jp-track strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:400; }.jp-track time { font-size:calc(16 * var(--u)); }.jp-track svg { justify-self:center; color:#cdd3e0; }.jp-eq { height:20px; display:flex; align-items:flex-end; gap:3px; }.jp-eq b { width:3px; height:40%; border-radius:99px; background:#cdd3e0; animation:jp-eq .55s infinite alternate; }.jp-eq b:nth-child(2){height:100%;animation-delay:.2s}.jp-eq b:nth-child(3){height:65%;animation-delay:.1s}@keyframes jp-eq{to{height:100%}}
+.popular-artists { padding-left:calc(12 * var(--u)); }.jp-artists { margin-top:calc(18 * var(--u)); display:flex; gap:calc(29 * var(--u)); overflow-x:auto; }.jp-artists article { min-width:calc(200 * var(--u)); color:#71757c; font-size:calc(20 * var(--u)); }.artist-image { position:relative; width:calc(200 * var(--u)); height:calc(200 * var(--u)); padding:0; display:block; overflow:hidden; border:0; border-radius:50%; color:#5a606a; background:#cdd3e0; }.artist-image img { width:100%; height:100%; object-fit:cover; }.artist-image span { position:absolute; right:calc(6 * var(--u)); bottom:calc(2 * var(--u)); width:calc(58 * var(--u)); height:calc(58 * var(--u)); display:grid; place-items:center; border-radius:50%; color:#232529; background:#fff; opacity:0; translate:0 8px; transition:.2s; }.artist-image:hover span { opacity:1; translate:0 0; }.jp-artists strong,.jp-artists small { display:block; margin-top:calc(8 * var(--u)); font-weight:400; }.jp-artists small{margin-top:0;font-size:calc(17 * var(--u))}.your-playlists { position:relative; min-height:0; padding:calc(20 * var(--u)); border:1px solid rgba(255,255,255,.2); border-radius:calc(28 * var(--u)); background:#232529; }.your-playlists .plus { position:absolute; top:calc(19 * var(--u)); right:calc(20 * var(--u)); border:0; color:#fff; background:transparent; }.playlist-scroll { height:calc(100% - 48px); margin-top:calc(16 * var(--u)); overflow:auto; }.playlist-line { height:calc(80 * var(--u)); display:flex; align-items:center; gap:calc(16 * var(--u)); color:#fff; font-size:calc(21 * var(--u)); }.playlist-line>span { width:calc(68 * var(--u)); height:calc(68 * var(--u)); display:grid; place-items:center; flex:0 0 auto; border-radius:9px; color:#dce2ed; background:#8fa1b1; }.playlist-line .liked-cover { color:#cdd3e0; }.listen-often { padding-left:calc(12 * var(--u)); }.often-grid { margin-top:calc(16 * var(--u)); display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:calc(20 * var(--u)); }.often-card { position:relative; height:calc(328 * var(--u)); min-width:0; overflow:hidden; border:1px solid rgba(255,255,255,.2); border-radius:calc(24 * var(--u)); background-color:#232529; background-position:center; background-size:cover; transition:transform .2s,box-shadow .2s; }.often-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,.3)}.often-card>button { position:absolute; top:calc(12 * var(--u)); right:calc(12 * var(--u)); border:0; color:#dce2ed; background:transparent; }.often-card strong { position:absolute; bottom:calc(22 * var(--u)); left:calc(22 * var(--u)); max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(20 * var(--u)); font-weight:400; }.often-card .play-card { top:auto; right:calc(12 * var(--u)); bottom:calc(12 * var(--u)); width:calc(46 * var(--u)); height:calc(46 * var(--u)); display:grid; place-items:center; border-radius:50%; color:#232529; background:#fff; }.jp-player { min-width:0; padding:calc(5 * var(--u)) calc(24 * var(--u)); display:flex; align-items:center; gap:calc(16 * var(--u)); border:1px solid rgba(255,255,255,.2); border-radius:calc(20 * var(--u)); background:#232529; }.jp-player>img { width:calc(58 * var(--u)); height:calc(58 * var(--u)); border-radius:7px; object-fit:cover; }.jp-current { width:calc(270 * var(--u)); min-width:0; }.jp-current strong,.jp-current small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.jp-current small{color:#a5aab3}.jp-player button{border:0;color:#fff;background:transparent}.player-center { min-width:0; flex:1; display:grid; justify-items:center; gap:2px; }.player-center>span { display:flex; align-items:center; gap:calc(16 * var(--u)); }.player-center .main-play { width:calc(42 * var(--u)); height:calc(42 * var(--u)); display:grid; place-items:center; border-radius:50%; color:#232529; background:#fff; }.player-center .on { color:#cdd3e0; }.player-center label{width:min(100%,calc(410 * var(--u)));display:flex;align-items:center;gap:7px;color:#8d939d;font-size:calc(13 * var(--u))}.player-center input,.volume input{accent-color:#cdd3e0;flex:1}.volume{width:calc(150 * var(--u));display:flex;align-items:center;gap:8px}.preview-note{text-align:center;color:#878d96;font-size:12px}.music-skeleton { display:block; min-height:55px; margin:8px 0; border-radius:10px; background:#36393f; animation:blink 1s infinite alternate; }.artist-skeleton { width:calc(200 * var(--u)); height:calc(200 * var(--u)); min-height:0; flex:0 0 auto; border-radius:50%; }@keyframes blink{to{opacity:.45}}.music-error{align-self:center;justify-self:center;color:#cdd3e0;font-size:24px}.music-error button{border:0;color:#171a1d;background:#cdd3e0;border-radius:8px;padding:6px 14px}
+@media(max-width:1100px){.page-music .sidebar{position:fixed;z-index:30;top:auto;bottom:0;left:0;width:100%;height:60px;background:#171a1d}.page-music .nav-list{grid-template-columns:repeat(6,1fr)}.page-music .nav-button{justify-content:center}.page-music .nav-button span,.page-music .theme-switch,.page-music .sidebar-bottom{display:none}.jp-music-page{height:auto;min-height:100vh;margin:0;padding:22px 20px 140px;grid-template-rows:auto auto auto auto auto}.jp-layout{grid-template-columns:1fr;grid-template-rows:auto;gap:24px}.popular-tracks{border:0}.jp-track-list{height:300px}.your-playlists{height:360px}.listen-often{padding:0}.often-grid{overflow-x:auto;grid-template-columns:repeat(5,190px)}.often-card{height:280px}.jp-player{position:fixed;z-index:25;right:12px;bottom:68px;left:12px}.jp-search{width:min(480px,100%)}.jp-artists{gap:20px}.jp-artists article,.artist-image{min-width:160px;width:160px;height:160px}}
+@media(prefers-reduced-motion:reduce){.jp-eq b,.music-skeleton{animation:none}.often-card,.artist-image span{transition:none}}
+
+/* Music canvas: coordinates are measured from the viewport, not from main-content. */
+.page-music, .page-music .main-content { --u:calc(100vw / 1920); --sidebar-w:calc(177 * var(--u)); background:#171a1d; }
+.app.page-music { display:block; width:100%; min-width:0; height:100vh; min-height:0; overflow:hidden; background:#171a1d; }
+.app.page-music .sidebar { position:fixed; z-index:10; top:28.5%; left:0; width:var(--sidebar-w); height:auto; min-height:0; padding:0; border:0; background:transparent; box-shadow:none; overflow:visible; }
+.app.page-music .nav-button { width:var(--sidebar-w); }
+.page-music .main-content { width:100%; max-width:none; min-width:0; height:100vh; min-height:0; margin:0; padding:0; overflow:hidden; }
+.music-main { box-sizing:border-box; width:calc(100% - var(--sidebar-w)); height:100vh; min-width:0; min-height:0; margin-left:var(--sidebar-w); padding:calc(26 * var(--u)) calc(55 * var(--u)) 0 calc(177 * var(--u) - var(--sidebar-w)); display:grid; grid-template-columns:calc(461 * var(--u)) minmax(0,1fr); grid-template-rows:calc(42 * var(--u)) calc(340 * var(--u)) minmax(0,1fr) calc(68 * var(--u)); column-gap:calc(24 * var(--u)); row-gap:calc(30 * var(--u)); overflow:hidden; background:#171a1d; font-family:"Barlow Condensed",sans-serif; }
+.music-main > *, .music-main .jp-layout > * { min-width:0; min-height:0; }.music-main .jp-layout { display:contents; }
+.music-main .music-user { grid-column:1 / -1; grid-row:1; justify-self:end; align-self:start; width:auto; height:calc(36 * var(--u)); padding:0 0 0 calc(10 * var(--u)); display:flex; align-items:center; gap:calc(13 * var(--u)); border-radius:0; color:#fff !important; background:transparent !important; font:400 calc(27 * var(--u)) "Barlow Condensed",sans-serif; cursor:pointer; }.music-main .music-user:hover { background:transparent !important; }.music-main .music-user span { padding:0; border:0; }.music-main .music-user .account-avatar-image { width:calc(30 * var(--u)); height:calc(30 * var(--u)); flex:0 0 calc(30 * var(--u)); border-radius:50%; object-fit:cover; }
+.music-main .jp-search { grid-column:1 / -1; grid-row:1; justify-self:center; align-self:start; width:calc(480 * var(--u)); height:calc(42 * var(--u)); margin:0; }.music-main .popular-tracks { grid-column:1; grid-row:2; padding-right:calc(12 * var(--u)); border-right:1px solid rgba(255,255,255,.25); }.music-main .popular-artists { grid-column:2; grid-row:2; padding-left:calc(24 * var(--u)); border-left:0; }.music-main .your-playlists { grid-column:1; grid-row:3; min-height:0; padding:calc(20 * var(--u)); border:1px solid rgba(255,255,255,.2); border-radius:calc(28 * var(--u)); background:#232529; }.music-main .listen-often { grid-column:2; grid-row:3; min-height:0; padding-left:calc(12 * var(--u)); }.music-main .jp-player { grid-column:1 / -1; grid-row:4; z-index:3; min-width:0; height:calc(68 * var(--u)); padding:calc(4 * var(--u)) calc(24 * var(--u)); border-radius:calc(20 * var(--u)); }.music-main .preview-note { display:none; }
+.music-main .jp-track-list { height:calc(298 * var(--u)); }.music-main .jp-artists { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:calc(21 * var(--u)); overflow:hidden; }.music-main .jp-artists article { min-width:0; font-size:calc(20 * var(--u)); }.music-main .artist-image { width:min(100%,calc(200 * var(--u))); height:auto; aspect-ratio:1; }.music-main .artist-skeleton { width:100%; height:auto; aspect-ratio:1; }.music-main .playlist-scroll { height:calc(100% - calc(44 * var(--u))); }.music-main .listen-often { display:grid; grid-template-rows:calc(30 * var(--u)) minmax(0,1fr); gap:calc(12 * var(--u)); }.music-main .often-grid { min-height:0; height:100%; margin:0; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:calc(21 * var(--u)); }.music-main .often-card { width:auto; height:100%; min-height:0; border-radius:calc(24 * var(--u)); }.music-main .jp-current { width:calc(220 * var(--u)); }.music-main .player-center { gap:0; }.music-main .player-center label { position:relative; padding-bottom:calc(10 * var(--u)); }.music-main .player-center label::after { position:absolute; bottom:calc(-2 * var(--u)); left:50%; color:#878d96; content:"30-second preview"; font-size:calc(11 * var(--u)); white-space:nowrap; translate:-50% 0; }.music-main .volume { width:calc(150 * var(--u)); }
+@media (max-width:1100px) { .app.page-music { height:auto; min-height:100vh; overflow:visible; }.music-main { width:100%; height:auto; min-height:100vh; margin:0; padding:22px 20px 140px; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto; overflow:visible; }.music-main .jp-search,.music-main .popular-tracks,.music-main .popular-artists,.music-main .your-playlists,.music-main .listen-often,.music-main .jp-player { grid-column:1; grid-row:auto; }.music-main .popular-artists,.music-main .listen-often{padding-left:0}.music-main .jp-artists{display:flex;overflow-x:auto}.music-main .jp-artists article{min-width:160px}.music-main .jp-player{position:fixed;z-index:25;right:12px;bottom:68px;left:12px;width:auto}.music-main .often-grid{overflow-x:auto;grid-template-columns:repeat(5,190px)} }
+
 /* Reference Home composition: each supplied 1920 × 1080 layer shares one canvas. */
 .home-app { position: relative; min-height: 100svh; overflow: hidden; background: #15181a; color: #fff; }
 .home-app .site-identity, .home-app footer, .home-app .theme-switch, .home-app .menu-button { display: none; }
@@ -307,10 +366,128 @@ footer { display: flex; justify-content: space-between; margin-top: 25px; color:
 .auth-close:hover { background: rgba(255,255,255,.14); opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .auth-input-frame, .auth-submit, .password-visibility, .auth-close { transition: none; } }
 
-/* Keep the account control consistent with Home on the requested section pages. */
+/* Keep section-page account controls consistent with Home. */
 .app:is(.page-music, .page-calendar, .page-settings) .top-actions { display: block; }
 .app:is(.page-music, .page-calendar, .page-settings) .top-actions > button:not(.avatar) { display: none; }
 .app:is(.page-music, .page-calendar, .page-settings) .top-actions .avatar { width: auto; height: 36px; padding: 0 0 0 10px; display: flex; align-items: center; gap: 13px; border-radius: 0; color: #fff !important; background: transparent !important; font: 400 27px "Barlow Condensed", sans-serif; }
 .app:is(.page-music, .page-calendar, .page-settings) .avatar span { height: 32px; padding: 0 10px; display: flex; align-items: center; border-inline: 1px solid rgba(255,255,255,.72); }
 .app:is(.page-music, .page-calendar, .page-settings) .avatar svg { fill: #fff; stroke-width: 0; }
 @media (max-width: 760px) { .app:is(.page-music, .page-calendar, .page-settings) .top-actions .avatar { font-size: 20px; } }
+
+/* Calendar and Settings share the dashboard's panel and theme treatment. */
+.page-calendar .utility-hero,
+.page-settings .utility-hero {
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(33, 47, 70, .04);
+}
+
+.dark.page-calendar .utility-hero,
+.dark.page-settings .utility-hero {
+  box-shadow: none;
+}
+
+.page-calendar .utility-panel,
+.page-settings .utility-panel {
+  border-radius: 16px;
+}
+
+.app.page-calendar .main-content,
+.app.page-settings .main-content {
+  margin-left: 175px;
+  margin-right: 0;
+}
+
+.page-settings .settings-hero {
+  background: radial-gradient(circle at 84% 22%, rgba(0, 198, 230, .16), transparent 27%), #f9fbfe;
+}
+
+.dark.page-settings .settings-hero {
+  background: radial-gradient(circle at 84% 22%, rgba(0, 198, 230, .16), transparent 27%), #202737;
+}
+
+.page-calendar .calendar-days button:focus-visible,
+.page-settings .settings-toggle:focus-visible,
+.page-calendar .small-action:focus-visible {
+  outline: 2px solid #00aeca;
+  outline-offset: 3px;
+}
+
+.dark.page-calendar,
+.dark.page-settings,
+.dark.page-calendar .main-content,
+.dark.page-settings .main-content {
+  background: #171a1d;
+}
+
+.dark.page-calendar .utility-hero,
+.dark.page-settings .utility-hero {
+  border-color: rgba(255, 255, 255, .2);
+  background: radial-gradient(circle at 88% 24%, rgba(255, 255, 255, .055), transparent 27%), #202326;
+}
+
+.dark.page-settings .settings-hero {
+  background: radial-gradient(circle at 84% 22%, rgba(255, 255, 255, .055), transparent 27%), #202326;
+}
+
+.dark.page-calendar .utility-panel,
+.dark.page-settings .utility-panel {
+  border-color: rgba(255, 255, 255, .2);
+  background: #232529;
+}
+
+.dark.page-calendar .calendar-weekdays {
+  color: #a5a9ae;
+}
+
+.dark.page-calendar .calendar-days button {
+  color: #d0d3d7;
+}
+
+.dark.page-calendar .calendar-days button:hover {
+  color: #fff;
+  background: #454950;
+}
+
+.dark.page-calendar .calendar-days button.today {
+  color: #171a1d;
+  background: #cdd3e0;
+}
+
+.dark.page-calendar .schedule-entry strong,
+.dark.page-settings .settings-row strong {
+  color: #f1f2f3;
+}
+
+.dark.page-calendar .schedule-entry > span,
+.dark.page-calendar .schedule-entry small,
+.dark.page-settings .settings-row small {
+  color: #a5a9ae;
+}
+
+.dark.page-settings .settings-row {
+  border-color: rgba(255, 255, 255, .14);
+}
+
+.dark.page-settings .settings-toggle:not(.on) {
+  color: #d0d3d7;
+  background: #454950;
+}
+
+.dark.page-calendar .nav-button,
+.dark.page-settings .nav-button {
+  color: #c0c8d2;
+}
+
+@media (max-width: 1100px) {
+  .page-calendar .calendar-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .app.page-calendar .main-content,
+  .app.page-settings .main-content {
+    margin-inline: auto;
+  }
+
+}

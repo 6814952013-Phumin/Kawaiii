@@ -3,8 +3,12 @@ import {
   BarChart3, Bell, CalendarDays, ChevronRight, Clock3, Disc3, Heart,
   House, ListPlus, Menu, Moon, Music2, Pencil, Play, Plus, Search,
   Settings, Sparkles, Sun, UserRound, X, Zap, SkipBack, SkipForward, Volume2, Eye, EyeOff,
-  LogOut, Pause
+  LogOut, Pause, Repeat2, Shuffle, VolumeX
 } from "lucide-react";
+import { getArtistTracks, getListenOftenTracks, getPopularArtists, getPopularTracks, recordTrackPlay, search as searchMusic } from "./services/musicService";
+import { usePlayer } from "./PlayerContext";
+import FavoriteSites from "./FavoriteSites";
+import { starterFavorites } from "./siteIcons";
 import vinylRecordImage from "../image/vinyl-record.avif";
 import backgroundLayer from "../image/Backgraoud1.png?inline";
 import kawaiiBackLayer from "../image/kawaii1.png?inline";
@@ -137,7 +141,7 @@ function AuthScreen({ mode, form, errors, loading, onChange, onSubmit, onSwitch,
   </div>;
 }
 
-function MusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCreate, onSaveTrack }) {
+function LegacyMusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCreate, onSaveTrack }) {
   const selectedPlaylist = playlists.find((playlist) => playlist.id === selectedPlaylistId) || playlists[0];
   const playlistTracks = selectedPlaylist ? selectedPlaylist.tracks.map((id) => frequentTracks.find((track) => track.id === id)).filter(Boolean) : [];
 
@@ -196,6 +200,37 @@ function MusicPage({ playlists, selectedPlaylistId, onSelectPlaylist, onOpenCrea
   </section>;
 }
 
+const seconds = (value = 0) => `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, "0")}`;
+function MusicPage({ user, profileAvatar, onOpenProfile }) {
+  const player = usePlayer();
+  const [tracks, setTracks] = useState([]); const [artists, setArtists] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
+  const [liked, setLiked] = useState(() => JSON.parse(localStorage.getItem("kawaiii-liked-songs") || "[]")); const [playlists, setPlaylists] = useState(() => JSON.parse(localStorage.getItem("kawaiii-jp-playlists") || "[]"));
+  const [query, setQuery] = useState(""); const [results, setResults] = useState(null);
+  const load = () => { setLoading(true); setError(false); Promise.all([getPopularTracks(), getPopularArtists()]).then(([t, a]) => { setTracks(t); setArtists(a); }).catch(() => setError(true)).finally(() => setLoading(false)); };
+  useEffect(load, []);
+  useEffect(() => localStorage.setItem("kawaiii-liked-songs", JSON.stringify(liked)), [liked]);
+  useEffect(() => localStorage.setItem("kawaiii-jp-playlists", JSON.stringify(playlists)), [playlists]);
+  useEffect(() => { const id = setTimeout(() => query ? searchMusic(query).then(setResults).catch(() => setResults({ songs: [], artists: [] })) : setResults(null), 300); return () => clearTimeout(id); }, [query]);
+  useEffect(() => { const close = (e) => e.key === "Escape" && setResults(null); window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, []);
+  const like = (track) => setLiked((items) => items.some((x) => x.id === track.id) ? items.filter((x) => x.id !== track.id) : [...items, track]);
+  const playArtist = async (artist) => { try { const list = await getArtistTracks(artist.id); if (list.length) player.playTrack(list[0], list); } catch { /* keep interface responsive */ } };
+  const frequently = getListenOftenTracks(tracks);
+  const oftenCards = [...(frequently.length ? frequently : tracks.slice(0, 5)), ...Array(Math.max(0, 5 - (frequently.length ? frequently.length : tracks.length))).fill(null)];
+  const play = (track, list) => { recordTrackPlay(track); player.playTrack(track, list); };
+  const createPlaylist = () => { const name = window.prompt("Playlist name"); if (name?.trim()) setPlaylists((x) => [...x, { id: Date.now(), name: name.trim() }]); };
+  return <section className="music-main jp-music-page">
+    <div className="jp-search"><Search size={21}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search songs or artists" aria-label="Search songs or artists" />{results && <div className="search-results">{results.songs?.length > 0 && <><small>Songs</small>{results.songs.map((track) => <button key={track.id} onClick={() => { play(track, results.songs); setResults(null); }}><span>{track.title}</span><em>{track.artist}</em></button>)}</>}{results.artists?.length > 0 && <><small>Artists</small>{results.artists.map((artist) => <button key={artist.id} onClick={() => { playArtist(artist); setResults(null); }}><span>{artist.name}</span><em>Artist</em></button>)}</>}</div>}</div>
+    <button className="avatar music-user" type="button" title="Profile" aria-label="Open profile" onClick={onOpenProfile}><span>{user?.name || "USER"}</span>{user && profileAvatar ? <img className="account-avatar-image" src={profileAvatar} alt=""/> : <UserRound size={24} fill="currentColor"/>}</button>
+    {error ? <div className="music-error">Couldn&apos;t load music. <button onClick={load}>Retry</button></div> : <div className="jp-layout">
+      <section className="popular-tracks jp-section"><h2>Popular tracks</h2><div className="jp-track-list">{loading ? [1,2,3,4].map((x) => <i className="music-skeleton" key={x}/>) : tracks.map((track, index) => <button className="jp-track" key={track.id} onClick={() => play(track, tracks)}>{player.playing && player.currentTrack?.id === track.id ? <span className="jp-eq"><b/><b/><b/></span> : <span>{String(index + 1).padStart(2,"0")}</span>}<img src={track.cover} alt=""/><strong>{track.title}</strong><time>{seconds(track.duration)}</time><Heart size={18} fill={liked.some((x) => x.id === track.id) ? "currentColor" : "none"} onClick={(e) => { e.stopPropagation(); like(track); }}/></button>)}</div></section>
+      <section className="popular-artists jp-section"><h2>Popular artists</h2><div className="jp-artists">{loading ? [1,2,3,4,5].map((x) => <i className="artist-skeleton music-skeleton" key={x}/>) : artists.slice(0,5).map((artist) => <article key={artist.id}><div className="artist-artwork"><div className="artist-image">{artist.cover ? <img src={artist.cover} alt={artist.name}/> : <Music2/>}</div><button className="artist-play-button" type="button" onClick={() => playArtist(artist)} aria-label={`Play ${artist.name}`}><Play fill="currentColor"/></button></div><strong>{artist.name}</strong><small>Artist</small></article>)}</div></section>
+      <section className="your-playlists"><h2>Your Playlist</h2><button className="plus" onClick={createPlaylist}><Plus/></button><div className="playlist-scroll"><div className="playlist-line"><span className="liked-cover"><Heart fill="currentColor"/></span><strong>Liked Songs</strong></div>{playlists.map((item) => <div className="playlist-line" key={item.id}><span><Music2/></span><strong>{item.name}</strong></div>)}</div></section>
+      <section className="listen-often jp-section"><h2>Listen Often</h2><div className="often-grid">{oftenCards.map((track, index) => track ? <article className="often-card" key={track.id} style={{ backgroundImage: `linear-gradient(0deg, #232529 0%, transparent 55%), url(${track.cover})` }}><button onClick={() => like(track)}><Heart fill={liked.some((x) => x.id === track.id) ? "currentColor" : "none"}/></button><strong title={track.originalTitle}>{track.title}</strong><button className="play-card" onClick={() => play(track, tracks)}><Play fill="currentColor"/></button></article> : <i className="often-card music-skeleton" key={`empty-${index}`}/>)}</div></section>
+    </div>}
+    <section className="jp-player">{player.currentTrack ? <><img src={player.currentTrack.cover} alt=""/><div className="jp-current"><strong>{player.currentTrack.title}</strong><small>{player.currentTrack.artist}</small></div><button onClick={() => like(player.currentTrack)}><Heart fill={liked.some((x) => x.id === player.currentTrack.id) ? "currentColor" : "none"}/></button><div className="player-center"><span><button onClick={() => player.setShuffle(!player.shuffle)} className={player.shuffle ? "on" : ""}><Shuffle/></button><button onClick={player.previous}><SkipBack fill="currentColor"/></button><button className="main-play" onClick={() => player.setPlaying(!player.playing)}>{player.playing ? <Pause fill="currentColor"/> : <Play fill="currentColor"/>}</button><button onClick={player.next}><SkipForward fill="currentColor"/></button><button onClick={() => player.setRepeat(player.repeat === "off" ? "all" : player.repeat === "all" ? "one" : "off")} className={player.repeat !== "off" ? "on" : ""}><Repeat2/></button></span><label>{seconds(player.progress)}<input type="range" min="0" max={player.currentTrack.duration || 30} value={player.progress} onChange={(e) => { player.setProgress(+e.target.value); const a = document.querySelector("audio"); if (a) a.currentTime = +e.target.value; }}/>{seconds(player.currentTrack.duration || 30)}</label></div><label className="volume"><button onClick={() => player.setVolume(player.volume ? 0 : .7)}>{player.volume ? <Volume2/> : <VolumeX/>}</button><input type="range" min="0" max="1" step=".01" value={player.volume} onChange={(e) => player.setVolume(+e.target.value)}/></label></> : <p>Pick a song to start</p>}</section><small className="preview-note">30-second preview</small>
+  </section>;
+}
+
 function CalendarPage() {
   const days = ["M", "T", "W", "T", "F", "S", "S"];
   const dates = Array.from({ length: 30 }, (_, index) => index + 1);
@@ -226,6 +261,7 @@ function QuickAccess({ shortcuts, editing, onToggleEditing, onEdit, onRemove, on
 }
 
 function HomeScene({ now, playing, liked, volume, onTogglePlay, onToggleLike, onVolume }) {
+  const sharedPlayer = usePlayer();
   const time = formatTime(now);
   return <section className="home-scene">
     <svg className="home-filter-definitions" aria-hidden="true" focusable="false">
@@ -248,24 +284,44 @@ function HomeScene({ now, playing, liked, volume, onTogglePlay, onToggleLike, on
     </div>
     <section className="home-clock" aria-label={`Current time ${time.time} ${time.period}`}><div>{time.time}<small>{time.period}</small></div><p>{formatDate(now)}</p></section>
     <section className="mini-player" aria-label="Music player">
-      <div className="mini-album" aria-label="Album art" />
-      <div className="player-controls"><button className={liked ? "liked" : ""} onClick={onToggleLike} aria-label="Like track"><Heart size={15} fill={liked ? "currentColor" : "none"}/></button><button aria-label="Previous track"><SkipBack size={17} fill="currentColor"/></button><button onClick={onTogglePlay} aria-label={playing ? "Pause" : "Play"}>{playing ? <span className="pause-icon">Ⅱ</span> : <Play size={18} fill="currentColor"/>}</button><button aria-label="Next track"><SkipForward size={17} fill="currentColor"/></button><label className="volume-control" aria-label="Volume"><Volume2 size={14}/><input type="range" min="0" max="100" value={volume} onChange={(event) => onVolume(Number(event.target.value))}/></label></div>
+      <div className="mini-album" aria-label="Album art" style={sharedPlayer.currentTrack?.cover ? { backgroundImage: `url(${sharedPlayer.currentTrack.cover})`, backgroundSize: "cover" } : undefined} />
+      <div className="player-controls"><button aria-label="Previous track" onClick={sharedPlayer.previous}><SkipBack size={17} fill="currentColor"/></button><button onClick={() => sharedPlayer.setPlaying(!sharedPlayer.playing)} aria-label={sharedPlayer.playing ? "Pause" : "Play"}>{sharedPlayer.playing ? <Pause size={18} fill="currentColor"/> : <Play size={18} fill="currentColor"/>}</button><button aria-label="Next track" onClick={sharedPlayer.next}><SkipForward size={17} fill="currentColor"/></button><label className="volume-control" aria-label="Volume"><Volume2 size={14}/><input type="range" min="0" max="100" value={Math.round(sharedPlayer.volume * 100)} onChange={(event) => sharedPlayer.setVolume(Number(event.target.value) / 100)}/></label></div>
     </section>
   </section>;
 }
 
 function ProfilePage({ user, onUserChange, onAvatarChange, onLogout }) {
+  const player = usePlayer();
   const [profile, setProfile] = useState(() => readProfile(user));
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
-  const [favoritesEditing, setFavoritesEditing] = useState(false);
-  const [favoriteDraft, setFavoriteDraft] = useState(null);
-  const [playing, setPlaying] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [musicTracks, setMusicTracks] = useState([]);
+  const [musicLoading, setMusicLoading] = useState(true);
+  const [musicError, setMusicError] = useState("");
+  const [musicLoadAttempt, setMusicLoadAttempt] = useState(0);
   const name = user?.name || profile.name || "Username";
   const bio = profile.bio || "";
-  const favorites = profile.favorites || [];
-  const tracks = ["Music Name", "Music Name", "Music Name", "Music Name", "Music Name"];
+  const favorites = Array.isArray(profile.favorites) ? profile.favorites : starterFavorites;
+  const tracks = getListenOftenTracks(musicTracks);
+  useEffect(() => {
+    let active = true;
+    setMusicLoading(true);
+    setMusicError("");
+    getPopularTracks()
+      .then((items) => { if (active) setMusicTracks(items); })
+      .catch((error) => { if (active) setMusicError(error.message || "Could not load songs."); })
+      .finally(() => { if (active) setMusicLoading(false); });
+    return () => { active = false; };
+  }, [musicLoadAttempt]);
+  const playOftenTrack = (track) => {
+    if (player.currentTrack?.id === track.id) {
+      player.setPlaying(!player.playing);
+      return;
+    }
+    recordTrackPlay(track);
+    player.playTrack(track, musicTracks);
+  };
   const saveProfile = (updates) => {
     const next = { ...profile, ...updates };
     setProfile(next); localStorage.setItem(profileStorageKey(user), JSON.stringify(next));
@@ -276,11 +332,6 @@ function ProfilePage({ user, onUserChange, onAvatarChange, onLogout }) {
   const chooseImage = (key) => (event) => {
     const file = event.target.files?.[0]; if (!file) return;
     const reader = new FileReader(); reader.onload = () => saveProfile({ [key]: reader.result }); reader.readAsDataURL(file);
-  };
-  const saveFavorite = (event) => {
-    event.preventDefault(); const form = new FormData(event.currentTarget); const siteName = String(form.get("siteName") || "").trim(); let url = String(form.get("siteUrl") || "").trim();
-    if (!siteName || !url) return; if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-    const list = [...favorites]; list[favoriteDraft] = { name: siteName, url }; saveProfile({ favorites: list }); setFavoriteDraft(null);
   };
   return <main className="profile-main">
       <section className="banner" style={profile.headerImage ? { backgroundImage: `url(${profile.headerImage})` } : undefined}>
@@ -294,21 +345,26 @@ function ProfilePage({ user, onUserChange, onAvatarChange, onLogout }) {
         <div className="profile-bio">{editingBio ? <textarea autoFocus defaultValue={bio} placeholder="Add a description" onBlur={(e) => { if (e.currentTarget.dataset.cancel !== "true") saveProfile({ bio: e.target.value }); setEditingBio(false); }} onKeyDown={(e) => { if (e.key === "Escape") { e.currentTarget.dataset.cancel = "true"; setEditingBio(false); } if (e.key === "Enter" && !e.shiftKey) e.currentTarget.blur(); }}/> : <button onClick={() => setEditingBio(true)}>{bio || "Add a description"} <Pencil size={14} fill="currentColor"/></button>}</div>
         <button className="profile-logout" onClick={onLogout}><LogOut size={23}/> Logout</button>
       </aside>
-      <section className="favorites"><h2>Website Favorites</h2><article className="profile-panel favorite-panel"><button className={`favorite-edit ${favoritesEditing ? "done" : ""}`} onClick={() => { setFavoritesEditing(!favoritesEditing); setFavoriteDraft(null); }}>{favoritesEditing ? "Done" : "Edit"}</button><div className="favorite-grid">{Array.from({ length: Math.max(6, favorites.length + (favoritesEditing ? 1 : 0)) }, (_, index) => {
-        const favorite = favorites[index]; if (favoriteDraft === index) return <form className="favorite-form" key={`form-${index}`} onSubmit={saveFavorite}><input name="siteName" placeholder="Name" autoFocus/><input name="siteUrl" placeholder="https://"/><button>Save</button></form>;
-        return favorite ? <a className="favorite-tile" key={favorite.url + index} href={favoritesEditing ? undefined : favorite.url} target="_blank" rel="noreferrer" onClick={(e) => { if (favoritesEditing) e.preventDefault(); }}><span>{favorite.name.slice(0, 1).toUpperCase()}</span><small>{favorite.name}</small>{favoritesEditing && <button type="button" onClick={(e) => { e.preventDefault(); saveProfile({ favorites: favorites.filter((_, item) => item !== index) }); }}>×</button>}</a> : <button className="favorite-tile empty" key={`empty-${index}`} disabled={!favoritesEditing} onClick={() => setFavoriteDraft(index)}><Plus size={28}/></button>;
-      })}</div></article></section>
-      <section className="listen"><h2>Listen Often</h2><article className="profile-panel listen-panel"><div className="list">{tracks.map((track, index) => <div className={`listen-row ${playing === index ? "playing" : ""}`} key={index}><span className="album-placeholder">Music</span><span className="song-title">{playing === index ? <i className="equalizer"><b/><b/><b/></i> : track}</span><button onClick={() => setPlaying(playing === index ? null : index)} aria-label={`${playing === index ? "Pause" : "Play"} ${track}`}>{playing === index ? <Pause size={19} fill="currentColor"/> : <Play size={19} fill="currentColor"/>}</button>{playing === index && <i className="song-progress"/>}</div>)}</div></article></section>
+      <FavoriteSites favorites={favorites} onSave={(nextFavorites) => saveProfile({ favorites: nextFavorites })} />
+      <section className="listen"><h2>Listen Often</h2><article className="profile-panel listen-panel"><div className="list">
+        {musicLoading ? <p className="listen-message" role="status">Loading songs...</p> : musicError ? <p className="listen-message" role="alert">{musicError} <button className="listen-retry" onClick={() => setMusicLoadAttempt((attempt) => attempt + 1)}>Retry</button></p> : tracks.length ? tracks.map((track) => {
+          const isPlaying = player.currentTrack?.id === track.id && player.playing;
+          return <div className={`listen-row ${isPlaying ? "playing" : ""}`} key={track.id}>
+            <span className="album-placeholder">{track.cover ? <img src={track.cover} alt=""/> : <Music2 size={19}/>}</span>
+            <span className="song-title">{isPlaying ? <i className="equalizer"><b/><b/><b/></i> : <><strong>{track.title}</strong><small>{track.artist}</small></>}</span>
+            <button onClick={() => playOftenTrack(track)} aria-label={`${isPlaying ? "Pause" : "Play"} ${track.title}`}>{isPlaying ? <Pause size={19} fill="currentColor"/> : <Play size={19} fill="currentColor"/>}</button>
+          </div>;
+        }) : <p className="listen-message">No songs to show yet.</p>}
+      </div></article></section>
       </div>
       {saved && <div className="profile-toast" role="status">Saved</div>}
     </main>;
 }
 
-function SettingsPage({ dark, onToggleDark }) {
+function SettingsPage() {
   return <section className="utility-page">
     <section className="utility-hero settings-hero"><span className="utility-icon"><Settings size={25}/></span><div><p className="eyebrow">PREFERENCES</p><h2>Set up your day<br/>your way.</h2><p>Small choices that make Kawaiii feel more like your own.</p></div></section>
     <section className="utility-panel settings-list">
-      <div className="settings-row"><div><strong>Appearance</strong><small>Choose the colour mode that feels most comfortable.</small></div><button className={`settings-toggle ${dark ? "on" : ""}`} type="button" onClick={onToggleDark} aria-pressed={dark}><span/>{dark ? "Dark" : "Light"}</button></div>
       <div className="settings-row"><div><strong>Daily focus reminder</strong><small>A gentle nudge to return to your most important task.</small></div><button className="settings-toggle on" type="button" aria-pressed="true"><span/>On</button></div>
       <div className="settings-row"><div><strong>Music recommendations</strong><small>Use your saved tracks to make the Music page more personal.</small></div><button className="settings-toggle on" type="button" aria-pressed="true"><span/>On</button></div>
     </section>
@@ -518,7 +574,7 @@ function App() {
           <div className="top-actions"><button title="Search"><Search size={20}/></button><button className="notify" title="Notifications"><Bell size={20}/><i /></button><button className="avatar" title="Profile" onClick={() => user ? setActivePage("profile") : openAuth("login")}><span>{user ? user.name : "USER"}</span>{user && profileAvatar ? <img className="account-avatar-image" src={profileAvatar} alt="" /> : <UserRound size={24} fill="currentColor"/>}</button></div>
         </header>
 
-        {activePage === "music" ? <MusicPage playlists={playlists} selectedPlaylistId={selectedPlaylistId} onSelectPlaylist={setSelectedPlaylistId} onOpenCreate={openPlaylistModal} onSaveTrack={saveTrackToPlaylist} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "settings" ? <SettingsPage dark={dark} onToggleDark={() => setDark((isDark) => !isDark)}/> : <HomeScene now={now} playing={playerPlaying} liked={playerLiked} volume={volume} onTogglePlay={() => setPlayerPlaying((value) => !value)} onToggleLike={() => setPlayerLiked((value) => !value)} onVolume={setVolume}/>}
+        {activePage === "music" ? <MusicPage user={user} profileAvatar={profileAvatar} onOpenProfile={() => user ? setActivePage("profile") : openAuth("login")} /> : activePage === "calendar" ? <CalendarPage/> : activePage === "settings" ? <SettingsPage/> : <HomeScene now={now} playing={playerPlaying} liked={playerLiked} volume={volume} onTogglePlay={() => setPlayerPlaying((value) => !value)} onToggleLike={() => setPlayerLiked((value) => !value)} onVolume={setVolume}/>}
         <footer><span><span className="footer-dot"/> All systems calm</span><span>Made for your day</span></footer>
       </main>}
 
